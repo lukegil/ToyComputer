@@ -1,0 +1,6 @@
+WORD_LENGTH = 10
+INSTRUCTION_LENGTH = 6
+WORD_COUNT = 100
+ADDRESS_LENGTH = len(str(bin(WORD_COUNT))[2:])
+if ( (INSTRUCTION_LENGTH + ADDRESS_LENGTH) * 2 != WORD_LENGTH):
+    raise ValueError("word length incorrect")
