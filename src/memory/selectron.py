@@ -1,67 +1,58 @@
 import pprint
-from utils import settings
-#receives input from the selectron matrix and then send it to Control when it wants
-# The primary purpose of this register is to assemble a word, from the forty different selectrons that normally exist
-# currently, though, the selectron outputs the proper 40bit strings, so this is more of a way station
+from utils import settings, util_functions
 
 class SelectronRegister(object):
-    
-    #there should be a 'build computer' function 
-    #that builds th SelectronMatrix and then passes it here
+    """Saves data to Selectron and retrieves data from it
+
+    Normally, the purpose of this would be take a bit from each 
+    selectron and assemble it into a single value. In the current
+    implementation, however, there is only one, three dimensional 
+    selectron, so no assembly required. This therefore simply acts 
+    as an api for the Selectron
+    """
     def __init__(self, s):
+        """requires the SelectronMatrix as an arg"""
         self.selectron_matrix = s
 
-    def check_string_length(self, input):
-        if (not isinstance(input, basestring)): 
-            raise TypeError("all inputs should be strings")
-        
-        if ( len(input) != self.selectron_matrix.get_word_length() ):
-            raise ValueError("inputs should be {} characters long".format(self.selectron_matrix.get_word_length))
-        
     def post_data_to_memory(self, address, data):
-        self.check_string_length(data)
+        """address : binary string corresponding to place in memory. 
+        data : binary string to be posted.
+        """
+        util_functions.check_binary_string(data)
         self.selectron_matrix.post_data(address, data)
         
-
-    #Future Feature
-    #when the Selectron Matrix is a series of n matrices, this will request from each one. For now, its just requesting it from the one
     def get_data_from_memory(self, address):
+        """returns a binary string"""
         return self.selectron_matrix.get_data(address)
 
 
-
-# 1. Build the matrix
-# 2. import data # this will be done by a bunch of posts
-# 3. get data from a certain address, post to register, return register
-# 4. post data to a certain address
-
 class SelectronMatrix(object):
+    """The fast-memory organ (RAM) for the machine"""
     def __init__(self, x_axis, y_axis, z_axis):
+        """Build the selectron. 
+        
+        x_axis, y_axis : the sum is how many 'words' the memory ought to hold
+        z_axis : the 'word length'. 
+        	Words are a theoretical minimum of 18 bits. Two sets of 
+                instructions (8 bits each) + each instruction has a
+                corresponding memory address--the address of the data on
+                which its acting. 
+        Each slot in memory receives a default value of 0
+	"""
         self.word_count = x_axis * y_axis
         self.word_length = z_axis
         self.selectron_dictionary = {}
-
-        #create the empty default word
-        default_word = ""
-        for i in range(self.word_length):
-            default_word += "0"
+        default_word = util_functions.create_default_word()
         
-        #create as many slots in the dict as there ought to be words
-        for k in range(self.word_count):
-            #turn to binary and pad with as many 0s as the largest address's length
-            self.selectron_dictionary[
-                str(bin(k))[2:].zfill(
-                    len(str(bin(self.word_count))[2:])
-                    )] = default_word
+        for k in range(settings.WORD_COUNT):
+            self.selectron_dictionary[util_functions.decimal_to_mem_address(k)] = default_word
             
-    def get_word_length(self):
-        return self.word_length
 
     def get_data(self, address):
         try:
             return self.selectron_dictionary[address]
         except KeyError:
-            raise KeyError("address is out of range of Selectron. It should be between 0 and {}".format(self.word_count))
+            raise KeyError("address is out of range of Selectron. It should be between 0 and {}".format(settings.WORD_COUNT))
         
 
     def post_data(self, address, value):
