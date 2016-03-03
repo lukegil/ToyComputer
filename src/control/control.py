@@ -74,7 +74,9 @@ class Orders(object):
         
         def gotoleft():
             """Sets counter to a specified memory address"""
+            logging.debug("control counter before gotoleft : {}".format(control["control_counter"].get_counter()))
             control["control_counter"].set_counter(memory_address)
+            logging.debug("control counter after gotoleft : {}".format(control["control_counter"].get_counter()))
             control["cff"].read_from_mem()
 
         def gotoright():
@@ -123,12 +125,12 @@ class Orders(object):
 
         #LEFTIFZERO
         elif order == "00001000":
-            if ( adder["accumulator"].get_accumulator_value() == 0 ):
+            if ( int(adder["accumulator"].get_accumulator_value()) == 0 ):
                 gotoleft()
 
         #RIGHTIFZERO
         elif order == "00001001":
-            if ( adder["accumulator"].get_accumulator_value() == 0 ):
+            if ( int(adder["accumulator"].get_accumulator_value()) == 0 ):
                 gotoright()
 
 
@@ -137,20 +139,20 @@ class Orders(object):
         #SAVE
         elif order == "00001011":
             value = adder["accumulator"].get_accumulator_value()
-            control["selectron_register"].post_data_to_memory(memory_address, value)
+            memory["selectron_register"].post_data_to_memory(memory_address, value)
 
 
         #REPLACELEFT
         elif order == "00001111":
-            word = control["selectron_register"].get_data_from_memory(memory_address)
+            word = memory["selectron_register"].get_data_from_memory(memory_address)
             new_word = "{}{}{}".format(word[:settings.INSTRUCTION_LENGTH], adder["accumulator"].get_accumulator_value(), word[ (settings.word_length / 2):])
-            control["selectron_register"].post_data_to_memory(memory_address, new_word)
+            memory["selectron_register"].post_data_to_memory(memory_address, new_word)
 
 	#REPLACELEFT
         elif order == "00010000":
-            word = control["selectron_register"].get_data_from_memory(memory_address)
+            word = memory["selectron_register"].get_data_from_memory(memory_address)
             new_word = "{}{}{}".format(word[ (settings.word_length / 2):], word[:settings.INSTRUCTION_LENGTH], adder["accumulator"].get_accumulator_value() )
-            control["selectron_register"].post_data_to_memory(memory_address, new_word)
+            memory["selectron_register"].post_data_to_memory(memory_address, new_word)
 
         #PRINT
         elif order == "00010001":
@@ -195,7 +197,7 @@ def meta_instructions(organs):
     control = organs["control"]
     memory = organs["memory"]
     adder = organs["adder"]
-    
+
     if ( not control["cff"].get_flipflop() ):
         logging.debug("============= \n Current Memory line : {}".format(control["control_counter"].get_counter()))
         control["function_register"].set_register(control["control_counter"].get_counter())
